@@ -88,7 +88,7 @@ def analyze_file(path: str) -> dict:
     ]
 
     avg_methods = (sum(methods_per_class) / n_classes) if n_classes else 0.0
-    
+
     # Exceções Levantadas e Tratadas
     n_raises = sum(isinstance(n, ast.Raise) for n in ast.walk(tree))
     n_except = sum(isinstance(n, ast.ExceptHandler) for n in ast.walk(tree))
@@ -119,10 +119,10 @@ def analyze_file(path: str) -> dict:
         'APF': round(avg_params, 2), #Average Parameters per Function
         'AMC': round(avg_methods, 2), #Average Methods per Class
         'NER': n_raises, #Number of Exception Raises
-        'NEH': n_except, #Number of Exception Handlers 
+        'NEH': n_except, #Number of Exception Handlers
         'CYC': cyclo, #Cyclomatic Complexity
         'MAD': depth, #Max AST Depth
-        'BUG': 0 
+        'BUG': 0
     }
 
 def scan_directory(root: str):

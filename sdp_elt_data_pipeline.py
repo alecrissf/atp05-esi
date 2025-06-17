@@ -8,26 +8,27 @@ import re
 import git
 import logging
 import os
+import pandas as pd
 
-def extract_non_patch_releases(github_token: str=None, github_owner: str="scikit-learn", 
+def extract_non_patch_releases(github_token: str=None, github_owner: str="scikit-learn",
                      github_repository: str="scikit-learn") -> list[dict]:
     """
-    Essa função extrai informações sobre a lista de releases do projeto hospedado no GitHub. 
-    São consideradas apenas releases que seguem a seguinte regras: 
-    (1) possuem três partes: MAJOR.MINOR.PATCH; 
-    (2) somente versões que não comecem em zero: MAJOR != 0; e 
+    Essa função extrai informações sobre a lista de releases do projeto hospedado no GitHub.
+    São consideradas apenas releases que seguem a seguinte regras:
+    (1) possuem três partes: MAJOR.MINOR.PATCH;
+    (2) somente versões que não comecem em zero: MAJOR != 0; e
     (3) Somente versões que terminam em zero: PATCH == 0.
-    
+
     Parameters:
         github_token (str): O token de acesso do GitHub. Valor padrão é None.
-        github_owner (str): O nome do owner do projeto. Valor padrão é "scikit-learn". 
+        github_owner (str): O nome do owner do projeto. Valor padrão é "scikit-learn".
         github_repository (str): O nome do repositório do projeto. Valor padrão é "scikit-learn".
-    
+
     Returns:
-        filtered_releases (list[dict]): A lista de releases em ordem decrescente de data de publicação. 
-        Cada release é um dicionário com os seguintes campos: 
-        “id” (identificador da relsease); 
-        “tag_name” (nome da tag associada a release); e  
+        filtered_releases (list[dict]): A lista de releases em ordem decrescente de data de publicação.
+        Cada release é um dicionário com os seguintes campos:
+        “id” (identificador da relsease);
+        “tag_name” (nome da tag associada a release); e
         “published_at”(data de publicação da relsease).
     """
 
@@ -35,7 +36,7 @@ def extract_non_patch_releases(github_token: str=None, github_owner: str="scikit
     releases = []
     fetched_releases = api.repos.list_releases(github_owner, github_repository, per_page=100, page=1)
     number_of_pages = math.ceil(len(fetched_releases)/100.00)
-    
+
     for page_number in range(1, number_of_pages + 1):
         fetched_releases = api.repos.list_releases(github_owner, github_repository, per_page=100, page=page_number)
         for release in fetched_releases:
@@ -57,18 +58,18 @@ def extract_non_patch_releases(github_token: str=None, github_owner: str="scikit
 
 def extract_post_release_timeline(releases: list[dict]=None):
     """
-    Essa função determina a release alvo e o período de tempo a ser usado para extração 
-    de pull requests de bug-fix. A release alvo é a antepenúltima release do projeto, 
-    a data de início é a data de publicação da release alvo, a data de fim é a data de 
+    Essa função determina a release alvo e o período de tempo a ser usado para extração
+    de pull requests de bug-fix. A release alvo é a antepenúltima release do projeto,
+    a data de início é a data de publicação da release alvo, a data de fim é a data de
     publicação da última release do projeto.
-    
+
     Parameters:
-        releases (list[dict]): A lista de releases. Valor padrão é None. 
-        Cada release é um dicionário com os seguintes campos: 
-        “id” (identificador da relsease); 
-        “tag_name” (nome da tag associada a release); e  
+        releases (list[dict]): A lista de releases. Valor padrão é None.
+        Cada release é um dicionário com os seguintes campos:
+        “id” (identificador da relsease);
+        “tag_name” (nome da tag associada a release); e
         “published_at”(data de publicação da relsease).
-    
+
     Returns:
         target_release_name (str): A release alvo.
         start_date (str): A data de início da extração de dados ("%Y-%m-%d").
@@ -85,24 +86,24 @@ def extract_post_release_timeline(releases: list[dict]=None):
 
     return target_release_name, start_date, end_date
 
-def extract_bug_fix_pull_requests(github_token: str=None, github_owner: str="scikit-learn", 
-                                  github_repository: str="scikit-learn", label: str="Bug", 
+def extract_bug_fix_pull_requests(github_token: str=None, github_owner: str="scikit-learn",
+                                  github_repository: str="scikit-learn", label: str="Bug",
                                   closed_since: str=None, closed_to: str=None) -> list[str]:
     """
-    Essa função faz a extração de pull requests de bug-fix no período estabelecido 
-    [closed_since, closed_to]. 
-    
+    Essa função faz a extração de pull requests de bug-fix no período estabelecido
+    [closed_since, closed_to].
+
     Parameters:
         github_token (str): O token de acesso do GitHub. Valor padrão é None.
-        github_owner (str): O nome do owner do projeto. Valor padrão é "scikit-learn". 
+        github_owner (str): O nome do owner do projeto. Valor padrão é "scikit-learn".
         github_repository (str): O nome do repositório do projeto. Valor padrão é "scikit-learn".
         label (str): O rótulo a ser utilizado na filtragem. Valor padrão é "Bug".
         closed_since (str): Data que define o período inicial de pull request fechados. Valor padrão é None.
         closed_to (str): Data que define o período final de pull request fechados. Valor padrão é None.
-    
+
     Returns:
         bug_fix_pull_request_numbers (list[str]): Lista contendo os números das pull requests selecionadas.
-    """    
+    """
     date_format = "%Y-%m-%d"
     resolution_since = datetime.strptime(closed_since,date_format).strftime(date_format)
     resolution_to = datetime.strptime(closed_to,date_format).strftime(date_format)
@@ -111,7 +112,7 @@ def extract_bug_fix_pull_requests(github_token: str=None, github_owner: str="sci
     bug_fix_pull_request_numbers = []
     fetched_bug_fix_pull_requests = api.search.issues_and_pull_requests(q=query, per_page=100, page=1)
     number_of_pages = math.ceil(fetched_bug_fix_pull_requests.total_count/100.00)
-    
+
     for page_number in range(1, number_of_pages + 1):
         fetched_bug_fix_pull_requests = api.search.issues_and_pull_requests(q=query, per_page=100, page=page_number)
         pull_requests = fetched_bug_fix_pull_requests.pop("items")
@@ -121,18 +122,18 @@ def extract_bug_fix_pull_requests(github_token: str=None, github_owner: str="sci
     return list(set(bug_fix_pull_request_numbers))
 
 
-def extract_bug_fix_commits(github_token: str=None, github_owner: str="scikit-learn", 
-                            github_repository: str="scikit-learn", 
+def extract_bug_fix_commits(github_token: str=None, github_owner: str="scikit-learn",
+                            github_repository: str="scikit-learn",
                             bug_fix_pull_request_numbers: list[str]=[]) -> list[str]:
     """
-    Essa função faz a extração de commits de bug-fix associados às pull requests de bug-fix. 
-    
+    Essa função faz a extração de commits de bug-fix associados às pull requests de bug-fix.
+
     Parameters:
         github_token (str): O token de acesso do GitHub. Valor padrão é None.
-        github_owner (str): O nome do owner do projeto. Valor padrão é "scikit-learn". 
+        github_owner (str): O nome do owner do projeto. Valor padrão é "scikit-learn".
         github_repository (str): O nome do repositório do projeto. Valor padrão é "scikit-learn".
         bug_fix_pull_request_numbers (list[str]): Lista contendo os números das pull requests selecionadas.  Valor padrão [].
-    
+
     Returns:
         bug_fix_commits (list[str]): Lista contendo os hash dos commits de bug-fix.
     """
@@ -143,26 +144,26 @@ def extract_bug_fix_commits(github_token: str=None, github_owner: str="scikit-le
         fetched_commits = api.pulls.list_commits(pull_number=pull_request_number)
         for commit in fetched_commits:
             bug_fix_commits.append(commit.sha)
-    
+
     return list(set(bug_fix_commits))
 
 
-def extract_buggy_files(github_token: str=None, github_owner: str="scikit-learn", 
-                        github_repository: str="scikit-learn", bug_fix_commits: list[str]=[], 
+def extract_buggy_files(github_token: str=None, github_owner: str="scikit-learn",
+                        github_repository: str="scikit-learn", bug_fix_commits: list[str]=[],
                         file_types=[".py"]) -> list[str]:
     """
-    Essa função faz a extração de commits de bug-fix associados às pull requests de bug-fix. 
-    
+    Essa função faz a extração de commits de bug-fix associados às pull requests de bug-fix.
+
     Parameters:
         github_token (str): O token de acesso do GitHub. Valor padrão é None.
-        github_owner (str): O nome do owner do projeto. Valor padrão é "scikit-learn". 
+        github_owner (str): O nome do owner do projeto. Valor padrão é "scikit-learn".
         github_repository (str): O nome do repositório do projeto. Valor padrão é "scikit-learn".
         bug_fix_commits (list[str]): Lista contendo os hash dos commits de bug-fix. Valor padrão [].
         file_types (list[str]): Lista de extensão dos tipos de arquivos suportados. Valor padrão [".py"].
-    
+
     Returns:
         buggy_files (list[str]): Lista contendo os arquivos afetados pelos commits de bug-fix.
-    """    
+    """
     buggy_files = []
     api = GhApi(token=github_token, owner=github_owner, repo=github_repository)
 
@@ -171,24 +172,24 @@ def extract_buggy_files(github_token: str=None, github_owner: str="scikit-learn"
         for file in fetched_commit.files:
             if str(file.filename).endswith(tuple(file_types)):
                 buggy_files.append(file.filename)
-    
+
     return buggy_files
 
 
-def extract_code_metrics_and_labeling(github_owner: str="scikit-learn", github_repository: str="scikit-learn", 
+def extract_code_metrics_and_labeling(github_owner: str="scikit-learn", github_repository: str="scikit-learn",
                                       release_tag: str=None, buggy_files: list[str]=[]) -> str:
     """
-    Essa função faz a extração das métricas de código e rotulagem nos arquivos da release alvo. 
-    
+    Essa função faz a extração das métricas de código e rotulagem nos arquivos da release alvo.
+
     Parameters:
         github_token (str): O token de acesso do GitHub. Valor padrão é None.
-        github_owner (str): O nome do owner do projeto. Valor padrão é "scikit-learn". 
+        github_owner (str): O nome do owner do projeto. Valor padrão é "scikit-learn".
         github_repository (str): O nome do repositório do projeto. Valor padrão é "scikit-learn".
         release_tag (str): Tag name da release alvo. Valor padrão None.
-        buggy_files (list[str]): Lista contendo os arquivos afetados pelos commits de bug-fix.    
-    
+        buggy_files (list[str]): Lista contendo os arquivos afetados pelos commits de bug-fix.
+
     Returns:
-        code_metrics_data (list[dict]): O conjundo de métricas de código e rótulo por arquivo.  
+        code_metrics_data (list[dict]): O conjundo de métricas de código e rótulo por arquivo.
     """
     local_repo = None
     if os.path.isdir(github_repository) and os.path.isdir(os.path.join(github_repository, '.git')):
@@ -203,30 +204,30 @@ def extract_code_metrics_and_labeling(github_owner: str="scikit-learn", github_r
     if not code_metrics_data:
         print("Nenhuma métrica foi coletada.")
         return
-    
+
     buggy_files_full_path = []
     for i in range(len(buggy_files)):
         buggy_files_full_path.append(local_repo_path + buggy_files[i])
 
         for row in code_metrics_data:
             row['BUG'] = 1 if row["FILE"] in buggy_files_full_path else 0 #Aplicando o rótulo
-    
+
     return code_metrics_data
 
 def load_raw_dataset(release_tag: str=None, code_metrics_data:list[dict]=None) -> str:
     """
     Essa função cria um arquivo CSV contendo o conjunto de métricas extraídas por arquivo e seus respectivos rótulos.
     O nome do arquivo é iniciado pela tag alvo.
-    
+
     Parameters:
         github_repository (str): O nome do repositório do projeto. Valor padrão é "scikit-learn".
         release_tag (str): Tag name da release alvo. Valor padrão None.
         code_metrics_data (list[dict]): O conjundo de métricas de código e rótulo por arquivo. Valor padrão None.
-    
+
     Returns:
-        dataset_file_path (str): O caminho para o dataset bruto gerado.  
-    """    
-    fieldnames = ['FILE', 'LOC', 'COM', 'BLK', 'NOF', 'NOC', 'APF', 'AMC', 'NER', 'NEH', 'CYC', 'MAD', 'BUG'] 
+        dataset_file_path (str): O caminho para o dataset bruto gerado.
+    """
+    fieldnames = ['FILE', 'LOC', 'COM', 'BLK', 'NOF', 'NOC', 'APF', 'AMC', 'NER', 'NEH', 'CYC', 'MAD', 'BUG']
     valid_prefix = release_tag.replace(".", "_")
     dataset_file_path = f"{valid_prefix}_sdp_pos_release_raw_dataset.csv"
     with open(dataset_file_path, mode='w', newline='', encoding='utf-8') as csvfile:
@@ -234,40 +235,52 @@ def load_raw_dataset(release_tag: str=None, code_metrics_data:list[dict]=None) -
         writer.writeheader()
         for row in code_metrics_data:
             writer.writerow(row)
-    
+
     return dataset_file_path
 
 def tansform_raw_dataset(dataset_file_path: str=None) -> None:
     """
-    Essa função aplica algumas transformações no arquivo CSV (dataset bruto) com o intuito de remover 
+    Essa função aplica algumas transformações no arquivo CSV (dataset bruto) com o intuito de remover
     linhas que possuam as seguintes características:
-    (1) trazem informações de arquivos irrelevante para a tarefa de predição 
+    (1) trazem informações de arquivos irrelevante para a tarefa de predição
     (e.g., arquivos de exemplos ou de documentação);
     (2) trazem valores zerados para a maioria das métricas; e
     (3) sejam valores muito fora do padrão (outliers).
 
     Parameters:
         dataset_file_path (str): O caminho para o dataset bruto gerado. Valor padrão None.
-    
+
     Returns:
-        transformed_file_path (str): O caminho para o dataset transformado.  
+        transformed_file_path (str): O caminho para o dataset transformado.
     """
     transformed_file_path = dataset_file_path.replace("raw", "trf")
 
     # Escreva seu código aqui. Use o pandas para fazer essa tarefa
-    # Ao final, salve as alterações em um arquivo como o neme contido em transformed_file_path 
+    # Ao final, salve as alterações em um arquivo como o neme contido em transformed_file_path
+
+    df = pd.read_csv(dataset_file_path, sep=";")
+    df.dropna(inplace=True)
+    # Remover documentação e exemplos
+    df = df[~(df["FILE"].str.contains("/doc/") | df["FILE"].str.contains("/examples/"))]
+    # Remover linhas onde mais de 75% das colunas são zero
+    df = df[(df == 0).sum(axis=1) < 0.25 * df.shape[1]]
+    # Remover linhas que estão acima de 3 desvios padrões da média
+    df[(df.select_dtypes(include='number') - df.mean(numeric_only=True)).abs() <= 3 * df.std(numeric_only=True)]
+
+    df.to_csv(transformed_file_path, index=False)
 
     return transformed_file_path
 
 def start():
-    token = "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"
-    
+    # Token removido por segurança
+    token = "<INSERIR_TOKEN>"
+
     logger = logging.getLogger(__name__)
     logging.basicConfig(filename='pipeline.log', encoding='utf-8', level=logging.DEBUG)
     logger.debug("[Step-1] Extraindo Releases Candidatas")
     releases = extract_non_patch_releases(github_token=token)
     logger.debug(f"\tTotal de releases {len(releases)}: {releases}")
-    
+
     logger.debug("\n[Step-2] Extraindo Relese Alvo e Timeline")
     release, start_date, end_date = extract_post_release_timeline(releases)
     logger.debug(f"\tRelease alvo {release} no período [{start_date}, {end_date}]")
@@ -277,17 +290,17 @@ def start():
                                                          closed_since=start_date,
                                                          closed_to=end_date)
     logger.debug(f"\tTotal de pull requests {len(pull_request_numbers)}: {pull_request_numbers}")
-    
+
     logger.debug("\n[Step-4] Extraindo Commits de Bug-Fix")
-    bug_fix_commits = extract_bug_fix_commits(github_token=token, 
+    bug_fix_commits = extract_bug_fix_commits(github_token=token,
                                               bug_fix_pull_request_numbers=pull_request_numbers)
     logger.debug(f"\tTotal de commits {len(bug_fix_commits)}: {bug_fix_commits}")
-    
+
     logger.debug("\n[Step-5] Extraindo Arquivos Defeituosos")
     buggy_files = extract_buggy_files(github_token=token,
                                       bug_fix_commits=bug_fix_commits)
     logger.debug(f"\tTotal de arquivos {len(buggy_files)}: {buggy_files}")
-    
+
     logger.debug("\n[Step-6] Extraindo Métricas de Código e Gerando Dataset Rotulado")
     code_metrics = extract_code_metrics_and_labeling(release_tag=release, buggy_files=buggy_files)
     logger.debug(f"\tTotal de linhas de métricas {len(code_metrics)-1}")
