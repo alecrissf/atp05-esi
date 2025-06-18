@@ -265,7 +265,7 @@ def tansform_raw_dataset(dataset_file_path: str=None) -> None:
     # Remover linhas onde mais de 75% das colunas são zero
     df = df[(df == 0).sum(axis=1) < 0.25 * df.shape[1]]
     # Remover linhas que estão acima de 3 desvios padrões da média
-    df = df[(df.select_dtypes(include='number') - df.mean(numeric_only=True)).abs() <= 3 * df.std(numeric_only=True)]
+    df = df[((df.select_dtypes(include='number') - df.mean(numeric_only=True)).abs() <= 3 * df.std(numeric_only=True)).any(axis=1)]
 
     df.to_csv(transformed_file_path, index=False)
 
